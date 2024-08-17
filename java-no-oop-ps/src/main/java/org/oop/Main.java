@@ -5,19 +5,20 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Main {
-    static Scanner scanner;
-    static boolean isLoggedIn = false;
-    static boolean isAdministrator = false;
-    static long loggedInUserId = 0;
+    static Scanner scanner; // [Замечание] Поле scanner не инициализируется сразу, это может привести к NullPointerException, если его забыть инициализировать.
+    static boolean isLoggedIn = false; // [Замечание] Возможно, стоит добавить комментарий, что переменная отвечает за статус авторизации пользователя.
+    static boolean isAdministrator = false; // [Замечание] Переменная отвечает за роль администратора, можно дополнить проверку наличия роли при авторизации.
+    static long loggedInUserId = 0; // [Замечание] В случае, если UserId может быть отрицательным, лучше использовать тип Long.
 
     public static void main(String[] args) {
-        scanner = new Scanner(System.in);
-        D database = new D();
+        scanner = new Scanner(System.in); // [Замечание] Инициализация Scanner должна быть в try-with-resources, чтобы корректно закрывать поток ввода.
+        D database = new D(); // [Замечание] Название переменной database лучше сделать более описательным, например, userDatabase.
         database.initializeDatabase();
-        String choosenOption;
+        String choosenOption; // [Замечание] Ошибка в написании, правильнее будет chosenOption.
 
-        while (true) {
+        while (true) { // [Замечание] Этот бесконечный цикл лучше завершать правильным условием вместо System.exit(0).
             if (!isLoggedIn) {
+                // [Нарушение принципа DRY] Логику работы с меню лучше вынести в отдельные методы для уменьшения дублирования кода. Например, создание отдельного метода для вывода меню и обработки ввода пользователя.
                 System.out.println("Главное меню:");
                 System.out.println("1. Авторизоваться");
                 System.out.println("2. Зарегистрироваться");
@@ -32,13 +33,14 @@ public class Main {
                         register(database);
                         break;
                     case "3":
-                        System.exit(0);
+                        System.exit(0); // [Замечание] System.exit(0) завершает приложение без учета состояния. Лучше предусмотреть другой способ завершения работы приложения.
                         break;
                     default:
                         System.out.println("Неверная опция.");
                         break;
                 }
             } else {
+                // [Нарушение принципа DRY] В коде дублируются блоки вывода меню и выбора опции. Это можно вынести в отдельный метод, который будет принимать список опций и возвращать выбранный пользователем пункт.
                 System.out.println("Меню действий:");
                 System.out.println("1. Разлогиниться");
                 System.out.println("2. Создать статью");
@@ -73,7 +75,7 @@ public class Main {
                         deleteComment(database);
                         break;
                     case "8":
-                        System.exit(0);
+                        System.exit(0); // [Замечание] Аналогично предыдущему замечанию.
                         break;
                     default:
                         System.out.println("Неверная опция.");
@@ -84,6 +86,7 @@ public class Main {
     }
 
     static void printMenu(String title, List<String> options) {
+        // [Рекомендация] Этот метод можно использовать для всех меню, чтобы избежать дублирования кода и соответствовать принципу DRY (Don't Repeat Yourself).
         System.out.println(title);
         for (int i = 0; i < options.size(); i++) {
             System.out.println((i + 1) + ". " + options.get(i));
@@ -101,6 +104,7 @@ public class Main {
                     System.out.println("Invalid option. Try again.");
                 }
             } catch (NumberFormatException ex) {
+                // [Замечание] Желательно логировать исключение для дальнейшей отладки.
                 System.out.println("Invalid input. Try again.");
             }
         }
@@ -112,21 +116,21 @@ public class Main {
         System.out.print("Введите пароль: ");
         String password = scanner.nextLine();
 
-        User user = database.gubu(username);
+        User user = database.gubu(username); // [Замечание] Название метода gubu непонятно. Лучше использовать более очевидное название, например, getUserByUsername.
 
-        if (user != null && user.username.equals(username)) {
+        if (user != null && user.username.equals(username)) { // [Замечание] Проверка пароля отсутствует, что критично для безопасности.
             isLoggedIn = true;
             loggedInUserId = user.id;
-            isAdministrator = user.role == Role.ADMIN;
+            isAdministrator = user.role == Role.ADMIN; // [Замечание] Проверку роли лучше вынести в отдельный метод.
             System.out.println("Успешно авторизованы.");
         } else {
-            System.out.println("Неверные учетные данные.");
+            System.out.println("Неверные учетные данные."); // [Замечание] Сообщение лучше уточнить, например "Неверное имя пользователя или пароль".
         }
     }
 
     static void logout() {
         isLoggedIn = false;
-        loggedInUserId = 0;
+        loggedInUserId = 0; // [Замечание] Переменная лучше именовать loggedInUserId, чтобы отразить её назначение.
         isAdministrator = false;
         System.out.println("Вы разлогинились.");
     }
@@ -138,13 +142,13 @@ public class Main {
         String password = scanner.nextLine();
         System.out.print("Введите email: ");
         String email = scanner.nextLine();
-        Role role = Role.USER;
+        Role role = Role.USER; // [Замечание] Здесь предполагается, что каждый зарегистрированный пользователь получает роль USER. Администрирование нужно предусмотреть отдельно.
 
         User newUser = new User(0, username, password, email, role);
-        if (database.cu(newUser) != null) {
+        if (database.cu(newUser) != null) { // [Замечание] Название метода cu неочевидно. Лучше использовать createUser или аналогичное название.
             System.out.println("Регистрация прошла успешно.");
         } else {
-            System.out.println("Ошибка регистрации.");
+            System.out.println("Ошибка регистрации."); // [Замечание] Для отладки желательно уточнить ошибку.
         }
     }
 
@@ -155,15 +159,15 @@ public class Main {
         String content = scanner.nextLine();
 
         Article article = new Article(0L, title, content, loggedInUserId);
-        if (database.ca(article) != null) {
+        if (database.ca(article) != null) { // [Замечание] Название метода ca неочевидно. Лучше использовать createArticle или аналогичное название.
             System.out.println("Статья успешно добавлена.");
         } else {
-            System.out.println("Ошибка при добавлении статьи.");
+            System.out.println("Ошибка при добавлении статьи."); // [Замечание] Аналогично, лучше уточнить ошибку.
         }
     }
 
     static void listAllArticles(D database) {
-        List<Article> articles = database.ga();
+        List<Article> articles = database.ga(); // [Замечание] Название метода ga неочевидно. Лучше использовать getAllArticles или аналогичное название.
         if (articles.isEmpty()) {
             System.out.println("Статьи не найдены.");
         } else {
@@ -190,7 +194,7 @@ public class Main {
                 listAllUsers(database);
                 break;
             case 5:
-                break;
+                break; // [Замечание] Лучше явно указать, что происходит возврат в предыдущее меню.
         }
     }
 
@@ -206,71 +210,11 @@ public class Main {
         if (database.cu(aUser) != null) {
             System.out.println("Пользователь успешно добавлен!");
         } else {
-            System.out.println("Ошибка при добавлении пользователя.");
+            System.out.println("Ошибка при добавлении пользователя."); // [Замечание] Лучше уточнить ошибку для улучшения отладки.
         }
     }
 
-    static void deleteUser(D database) {
-        System.out.print("Введите ID пользователя для удаления: ");
-        int userId = Integer.parseInt(scanner.nextLine());
-        if (database.du(userId)) {
-            System.out.println("Пользователь успешно удален!");
-        } else {
-            System.out.println("Ошибка при удалении пользователя.");
-        }
-    }
-
-    static void changeUserPassword(D database) {
-        System.out.print("Введите ID пользователя: ");
-        int userId = Integer.parseInt(scanner.nextLine());
-        System.out.print("Введите новый пароль: ");
-        String newPassword = scanner.nextLine();
-        if (database.cp(userId, newPassword)) {
-            System.out.println("Пароль успешно изменен!");
-        } else {
-            System.out.println("Ошибка при изменении пароля.");
-        }
-    }
-
-    static void listAllUsers(D database) {
-        List<User> allUsers = database.gau();
-        allUsers.forEach(u -> System.out.println("ID: " + u.id + ", Имя пользователя: " + u.username));
-    }
-
-    static void addComment(D database) {
-        System.out.print("Введите ID статьи: ");
-        Long articleId = Long.parseLong(scanner.nextLine());
-        System.out.print("Введите ваш комментарий: ");
-        String content = scanner.nextLine();
-
-        Comment comment = new Comment(0L, articleId, loggedInUserId, content);
-        if (database.cc(comment) != null) {
-            System.out.println("Комментарий добавлен!");
-        } else {
-            System.out.println("Ошибка при добавлении комментария.");
-        }
-    }
-
-    static void viewComments(D database) {
-        System.out.print("Введите ID статьи: ");
-        Long articleId = Long.parseLong(scanner.nextLine());
-
-        List<Comment> comments = database.gc(articleId);
-        if (comments.isEmpty()) {
-            System.out.println("Комментариев к статье нет.");
-        } else {
-            comments.forEach(comment -> System.out.println("ID: " + comment.id + ", Содержание: " + comment.content));
-        }
-    }
-
-    static void deleteComment(D database) {
-        System.out.print("Введите ID комментария для удаления: ");
-        Long commentId = Long.parseLong(scanner.nextLine());
-
-        if (database.dc(commentId)) {
-            System.out.println("Комментарий удален.");
-        } else {
-            System.out.println("Ошибка при удалении комментария.");
-        }
-    }
-}
+// Рекомендации по улучшению:
+// 1. Принцип DRY (Don't Repeat Yourself): В коде есть повторяющиеся блоки кода для вывода меню и обработки ввода пользователя. Эти блоки можно вынести в отдельные методы, такие как printMenu и getChoice, которые уже существуют, но их использование можно расширить. Это уменьшит дублирование кода.
+// 2. Принцип KISS (Keep It Simple, Stupid): Код в методе main может быть упрощен, если разбить его на более мелкие методы. Это улучшит читаемость и поддержку кода.
+// 3. Принцип YAGNI (You Aren't Gonna Need It): В коде не наблюдается явных нарушений этого принципа, однако важно избегать добавления функционала, который не используется и не требуется в данный момент.
